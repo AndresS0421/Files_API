@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Universities {
+  id          String    @id @default(cuid())
+  name        String    @unique @db.VarChar(100)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relations
+  schools     Schools[]
+}
+
+model Schools {
+  id            String    @id @default(cuid())
+  university_id String    
+  name          String    @unique @db.VarChar(100)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  // Relations
+  university   Universities @relation(fields: [university_id], references: [id], onDelete: Cascade)
+  users        Users[]
+}
+
+model Credentials {
+  id          String    @id @default(cuid())
+  credential  String    @db.VarChar(255)
+  user_id     String    @unique
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relations
+  user        Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Users {
+  id             String      @id @default(cuid())
+  school_id      String      
+  credential_id  String?     @unique
+  first_name     String      @db.VarChar(50)
+  last_name      String      @db.VarChar(50)
+  email          String      @unique @db.VarChar(100)
+  role           Role
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  // Relations
+  school         Schools     @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  credential     Credentials?
+  thesis         Thesis[]
+}
+
+model Thesis {
+  id          String    @id @default(cuid())
+  user_id     String
+  title       String    @unique @db.VarChar(255)
+  author      String    @db.VarChar(255)
+  year        Int
+  abstract    String    @db.Text
+  key_words   String    @db.VarChar(255)
+  category_id String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relations
+  thesisFiles  thesisFiles[]
+  category    Categories  @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  user        Users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model thesisFiles {
+  id          String    @id @default(cuid())
+  thesis_id   String
+  thesis_url  String    @db.VarChar(500)  // Standard URL length
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relations
+  thesis      Thesis    @relation(fields: [thesis_id], references: [id], onDelete: Cascade)
+}
+
+model Categories {
+  id          String    @id @default(cuid())
+  name        String    @db.VarChar(50)
+  description String?   @db.VarChar(255)  // Optional description
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relations
+  thesis      Thesis[]
+}
+
+enum Role {
+  STUDENT
+  PROFESSOR
+  ADMINISTRATOR
+}
