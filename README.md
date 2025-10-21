@@ -82,7 +82,7 @@ POST /files/upload
 Content-Type: multipart/form-data
 
 Body:
-- file: (file) - The file to upload
+- file: (file) - The file to upload (PDF only)
 - file: (JSON string) - File metadata
   {
     "description": "File description",
@@ -91,20 +91,32 @@ Body:
   }
 ```
 
+**Note:** Only one file per user is allowed. Uploading a new file will replace the existing one.
+
 #### Get All Files
 ```http
-GET /files/get_all?role=ADMINISTRATOR
+GET /files/get-all?role=ADMINISTRATOR
 ```
+
+**Query Parameters:**
+- `role` (required): Must be "ADMINISTRATOR" or "PROFESSOR"
 
 #### Get File by ID
 ```http
-GET /files/get_by_id?file_id=file123&role=ADMINISTRATOR
+GET /files/get?file_id=file123&role=ADMINISTRATOR
 ```
+
+**Query Parameters:**
+- `file_id` (required): The ID of the file to retrieve
+- `role` (required): Must be "ADMINISTRATOR" or "PROFESSOR"
 
 #### Get Files by User ID
 ```http
-GET /files/get_by_user_id?user_id=user123
+GET /files/get-user-id?user_id=user123
 ```
+
+**Query Parameters:**
+- `user_id` (required): The ID of the user whose files to retrieve
 
 #### Update File
 ```http
@@ -126,6 +138,10 @@ Body:
 DELETE /files/delete?user_id=user123&file_id=file123
 ```
 
+**Query Parameters:**
+- `user_id` (required): The ID of the user who owns the file
+- `file_id` (required): The ID of the file to delete
+
 ### Categories Management
 
 #### Create Category
@@ -134,36 +150,48 @@ POST /category/create
 Content-Type: application/json
 
 {
-  "name": "Category Name",
-  "description": "Category description (optional)"
+  "category": {
+    "name": "Category Name",
+    "description": "Category description (optional)"
+  },
+  "role": "ADMINISTRATOR"
 }
 ```
 
+**Note:** Only users with ADMINISTRATOR role can create categories.
+
 #### Get All Categories
 ```http
-GET /category/get_all
-```
-
-#### Get Category by ID
-```http
-GET /category/get_by_id?id=cat123
+GET /category/get-all
 ```
 
 #### Update Category
 ```http
-PUT /category/update?id=cat123
+PUT /category/update
 Content-Type: application/json
 
 {
-  "name": "Updated Category Name",
-  "description": "Updated description"
+  "category": {
+    "id": "cat123",
+    "name": "Updated Category Name",
+    "description": "Updated description"
+  },
+  "role": "ADMINISTRATOR"
 }
 ```
 
+**Note:** Only users with ADMINISTRATOR role can update categories.
+
 #### Delete Category
 ```http
-DELETE /category/delete?id=cat123
+DELETE /category/delete?id=cat123&role=ADMINISTRATOR
 ```
+
+**Query Parameters:**
+- `id` (required): The ID of the category to delete
+- `role` (required): Must be "ADMINISTRATOR"
+
+**Note:** Only users with ADMINISTRATOR role can delete categories.
 
 ## 🗄️ Database Schema
 
@@ -243,14 +271,53 @@ curl -X POST http://localhost:8090/files/upload \
 
 ### Get All Files
 ```bash
-curl "http://localhost:8090/files/get_all?role=ADMINISTRATOR"
+curl "http://localhost:8090/files/get-all?role=ADMINISTRATOR"
+```
+
+### Get File by ID
+```bash
+curl "http://localhost:8090/files/get?file_id=file123&role=ADMINISTRATOR"
+```
+
+### Get Files by User ID
+```bash
+curl "http://localhost:8090/files/get-user-id?user_id=user123"
+```
+
+### Update a File
+```bash
+curl -X PUT http://localhost:8090/files/update \
+  -F "file=@updated_document.pdf" \
+  -F 'file={"user_id":"user123","description":"Updated thesis document","category_id":"cat789"}'
+```
+
+### Delete a File
+```bash
+curl -X DELETE "http://localhost:8090/files/delete?user_id=user123&file_id=file123"
 ```
 
 ### Create a Category
 ```bash
 curl -X POST http://localhost:8090/category/create \
   -H "Content-Type: application/json" \
-  -d '{"name":"Computer Science","description":"CS related documents"}'
+  -d '{"category":{"name":"Computer Science","description":"CS related documents"},"role":"ADMINISTRATOR"}'
+```
+
+### Get All Categories
+```bash
+curl "http://localhost:8090/category/get-all"
+```
+
+### Update a Category
+```bash
+curl -X PUT http://localhost:8090/category/update \
+  -H "Content-Type: application/json" \
+  -d '{"category":{"id":"cat123","name":"Updated Computer Science","description":"Updated CS documents"},"role":"ADMINISTRATOR"}'
+```
+
+### Delete a Category
+```bash
+curl -X DELETE "http://localhost:8090/category/delete?id=cat123&role=ADMINISTRATOR"
 ```
 
 ## 🔒 Security Notes
